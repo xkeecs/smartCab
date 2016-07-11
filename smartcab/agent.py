@@ -11,13 +11,12 @@ class LearningAgent(Agent):
         self.color = 'red'  # override color
         self.planner = RoutePlanner(self.env, self)  # simple route planner to get next_waypoint
         # TODO: Initialize any additional variables here
-        self.previous_reward = 0
-        self.previous_action = None
+        self.total_reward = 0
+        self.next_waypoint = None
 
     def reset(self, destination=None):
         self.planner.route_to(destination)
         # TODO: Prepare for a new trip; reset any variables here, if required
-        self.previous_reward = 0
         self.previous_action = None
         self.state = None
 
@@ -27,15 +26,31 @@ class LearningAgent(Agent):
         self.next_waypoint = self.planner.next_waypoint()  # from route planner, also displayed by simulator
         inputs = self.env.sense(self)
         deadline = self.env.get_deadline(self)
-
-        # TODO: Update state
+        env_states = self.env.agent_states[self]
+        is_valid = True
         
         # TODO: Select action according to your policy
-        action = None
+        action = random.choice(Environment.valid_actions)
+        
+        # TODO: Update state
+        if self.next_waypoint == 'right':
+            if inputs['light'] == 'red' and inputs['left'] == 'forward':
+                is_valid = False
+        elif self.next_waypoint == 'straight':
+            if inputs['light'] == 'red':
+                is_valid = False
+        elif self.next_waypoint == 'left':
+            if inputs['light'] == 'red' or (inputs['oncoming'] == 'right' or inputs['oncoming'] == 'forward' ):
+                is_valid = False
+                
+        if not is_valid:
+            action = None
 
+        self.state = (inputs['light'], inputs['oncoming'], self.next_waypoint, env_states['location'])
         # Execute action and get reward
         reward = self.env.act(self, action)
-
+        self.total_reward += reward
+        
         # TODO: Learn policy based on state, action, reward
 
         print "LearningAgent.update(): deadline = {}, inputs = {}, action = {}, reward = {}".format(deadline, inputs, action, reward)  # [debug]
@@ -47,7 +62,7 @@ def run():
     # Set up environment and agent
     e = Environment()  # create environment (also adds some dummy traffic)
     a = e.create_agent(LearningAgent)  # create agent
-    e.set_primary_agent(a, enforce_deadline=True)  # specify agent to track
+    e.set_primary_agent(a, enforce_deadline=False)  # specify agent to track
     # NOTE: You can set enforce_deadline=False while debugging to allow longer trials
 
     # Now simulate it
