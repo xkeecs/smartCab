@@ -93,19 +93,19 @@ class QLearningAgent(Agent):
         self.next_waypoint = self.planner.next_waypoint()  # from route planner, also displayed by simulator
         inputs = self.env.sense(self)
         deadline = self.env.get_deadline(self)
-        env_states = self.env.agent_states[self]
+        #env_states = self.env.agent_states[self]
 
-        self.state = (inputs['light'], inputs['oncoming'], self.next_waypoint, env_states['location'])
+        self.state = (inputs['light'], inputs['oncoming'], inputs['left'], self.next_waypoint)
         action = self.QLearner.q_move(self.state)        
         
         # Execute action and get reward
         reward = self.env.act(self, action)
         self.total_reward += reward
         
-        new_inputs = self.env.sense(self).items()
-        env_states = self.env.agent_states[self]
+        new_inputs = self.env.sense(self)
+        #env_states = self.env.agent_states[self]
 
-        self.next_state =  (new_inputs['light'], new_inputs['oncoming'], self.next_waypoint, env_states['location'])
+        self.next_state =  (new_inputs['light'], new_inputs['oncoming'], self.next_waypoint)
         # TODO: Learn policy based on state, action, reward
 
         self.QLearner.q_future_reward(self.state, action, self.next_state, reward)
@@ -125,7 +125,7 @@ def run():
     sim = Simulator(e, update_delay=0.1, display=True)  # create simulator (uses pygame when display=True, if available)
     # NOTE: To speed up simulation, reduce update_delay and/or set display=False
 
-    sim.run(n_trials=100)  # run for a specified number of trials
+    sim.run(n_trials=10)  # run for a specified number of trials
     # NOTE: To quit midway, press Esc or close pygame window, or hit Ctrl+C on the command-line
 
 

@@ -30,7 +30,8 @@ class Environment(object):
     valid_inputs = {'light': TrafficLight.valid_states, 'oncoming': valid_actions, 'left': valid_actions, 'right': valid_actions}
     valid_headings = [(1, 0), (0, -1), (-1, 0), (0, 1)]  # ENWS
     hard_time_limit = -100  # even if enforce_deadline is False, end trial when deadline reaches this value (to avoid deadlocks)
-
+    
+    
     def __init__(self):
         self.done = False
         self.t = 0
@@ -43,6 +44,7 @@ class Environment(object):
         self.block_size = 100
         self.intersections = OrderedDict()
         self.roads = []
+        self.successful_deliver_num = 0
         for x in xrange(self.bounds[0], self.bounds[2] + 1):
             for y in xrange(self.bounds[1], self.bounds[3] + 1):
                 self.intersections[(x, y)] = TrafficLight()  # a traffic light at each intersection
@@ -122,6 +124,8 @@ class Environment(object):
             elif self.enforce_deadline and agent_deadline <= 0:
                 self.done = True
                 print "Environment.step(): Primary agent ran out of time! Trial aborted."
+                print "Tota reached: \n"
+                print self.successful_deliver_num
             self.agent_states[self.primary_agent]['deadline'] = agent_deadline - 1
 
     def sense(self, agent):
@@ -204,8 +208,13 @@ class Environment(object):
                 if state['deadline'] >= 0:
                     reward += 10  # bonus
                 self.done = True
+                self.successful_deliver_num = self.successful_deliver_num + 1
                 print "Environment.act(): Primary agent has reached destination!"  # [debug]
+                print "Tota reached: \n"
+                print self.successful_deliver_num
+                
             self.status_text = "state: {}\naction: {}\nreward: {}".format(agent.get_state(), action, reward)
+            
             #print "Environment.act() [POST]: location: {}, heading: {}, action: {}, reward: {}".format(location, heading, action, reward)  # [debug]
 
         return reward

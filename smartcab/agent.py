@@ -46,7 +46,7 @@ class LearningAgent(Agent):
         if not is_valid:
             action = None
 
-        self.state = (inputs['light'], inputs['oncoming'], self.next_waypoint, env_states['location'])
+        self.state = (inputs['light'], inputs['oncoming'], inputs['left'], self.next_waypoint)
         # Execute action and get reward
         reward = self.env.act(self, action)
         self.total_reward += reward
