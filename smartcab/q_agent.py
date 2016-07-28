@@ -50,12 +50,12 @@ class QAlgorithm(Agent):
             action = self.valid_actions[act_index]
         return action
         
-    def q_learn(self, state, action, reward, new_q):
+    def q_learn(self, state, action, reward, future_rewards):
         q = self.Q.get(state, action)
         if q is None:
             q = reward
         else:
-            q = q + self.alpha* new_q
+            q += self.alpha * (reward + self.gamma * future_rewards)
     
         self.Q.set(state, action, q)
     
@@ -65,7 +65,7 @@ class QAlgorithm(Agent):
         if future_rewards is None:
             future_rewards = 0.0
             
-        self.q_learn(state, action, reward, reward - self.gamma * future_rewards)
+        self.q_learn(state, action, reward, future_rewards)
         self.Q.report()
         
 class QLearningAgent(Agent):
@@ -86,7 +86,10 @@ class QLearningAgent(Agent):
         # TODO: Prepare for a new trip; reset any variables here, if required
         self.previous_action = None
         self.next_state = None
-        
+        self.total_reward = 0
+        self.next_waypoint = None
+        self.QLearner = QAlgorithm(epsilon=0.03, alpha = 0.1, gamma = 0.9)
+        self.next_state = None
         
     def update(self, t):
         # Gather inputs
@@ -105,7 +108,7 @@ class QLearningAgent(Agent):
         new_inputs = self.env.sense(self)
         #env_states = self.env.agent_states[self]
 
-        self.next_state =  (new_inputs['light'], new_inputs['oncoming'], self.next_waypoint)
+        self.next_state =  (new_inputs['light'], new_inputs['oncoming'], new_inputs['left'], self.next_waypoint)
         # TODO: Learn policy based on state, action, reward
 
         self.QLearner.q_future_reward(self.state, action, self.next_state, reward)
@@ -125,7 +128,7 @@ def run():
     sim = Simulator(e, update_delay=0.1, display=True)  # create simulator (uses pygame when display=True, if available)
     # NOTE: To speed up simulation, reduce update_delay and/or set display=False
 
-    sim.run(n_trials=10)  # run for a specified number of trials
+    sim.run(n_trials=100)  # run for a specified number of trials
     # NOTE: To quit midway, press Esc or close pygame window, or hit Ctrl+C on the command-line
 
 
