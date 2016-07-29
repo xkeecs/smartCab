@@ -55,8 +55,18 @@ class QAlgorithm(Agent):
         if q is None:
             q = reward
         else:
-            q += self.alpha * (reward + self.gamma * future_rewards)
-    
+            q += self.alpha * (reward - self.gamma * future_rewards - q)
+           
+            '''
+            if future_rewards >=0:
+                if reward > 0:
+                    q += self.alpha * (reward + self.gamma * future_rewards - q)
+                else: 
+                    q += self.alpha * (self.gamma * future_rewards - q)
+            else:
+                if reward > 0:
+                    q += self.alpha * (reward - q)
+            '''
         self.Q.set(state, action, q)
     
     def q_future_reward(self, state, action, next_state, reward):
@@ -65,7 +75,11 @@ class QAlgorithm(Agent):
         if future_rewards is None:
             future_rewards = 0.0
             
-        self.q_learn(state, action, reward, future_rewards)
+        self.q_learn(state, action, reward,  future_rewards)
+        print "reward:"
+        print reward
+        print "future reward:"
+        print future_rewards
         self.Q.report()
         
 class QLearningAgent(Agent):
@@ -78,19 +92,20 @@ class QLearningAgent(Agent):
         # TODO: Initialize any additional variables here
         self.total_reward = 0
         self.next_waypoint = None
-        self.QLearner = QAlgorithm(epsilon=0.03, alpha = 0.1, gamma = 0.9)
+        self.QLearner = QAlgorithm(epsilon=0.05, alpha = 0.1, gamma = 0.9)
         self.next_state = None
         
     def reset(self, destination=None):
         self.planner.route_to(destination)
         # TODO: Prepare for a new trip; reset any variables here, if required
+        '''
         self.previous_action = None
         self.next_state = None
         self.total_reward = 0
         self.next_waypoint = None
         self.QLearner = QAlgorithm(epsilon=0.03, alpha = 0.1, gamma = 0.9)
         self.next_state = None
-        
+        '''
     def update(self, t):
         # Gather inputs
         self.next_waypoint = self.planner.next_waypoint()  # from route planner, also displayed by simulator
@@ -98,7 +113,10 @@ class QLearningAgent(Agent):
         deadline = self.env.get_deadline(self)
         #env_states = self.env.agent_states[self]
 
-        self.state = (inputs['light'], inputs['oncoming'], inputs['left'], self.next_waypoint)
+        
+#        self.state = (inputs['light'], inputs['oncoming'], inputs['left'], self.next_waypoint)
+        self.state = (inputs['light'], self.next_waypoint)
+
         action = self.QLearner.q_move(self.state)        
         
         # Execute action and get reward
@@ -108,7 +126,9 @@ class QLearningAgent(Agent):
         new_inputs = self.env.sense(self)
         #env_states = self.env.agent_states[self]
 
-        self.next_state =  (new_inputs['light'], new_inputs['oncoming'], new_inputs['left'], self.next_waypoint)
+        #self.next_state =  (new_inputs['light'], new_inputs['oncoming'], new_inputs['left'], self.next_waypoint)
+        self.next_state =  (new_inputs['light'], self.next_waypoint)
+        
         # TODO: Learn policy based on state, action, reward
 
         self.QLearner.q_future_reward(self.state, action, self.next_state, reward)
