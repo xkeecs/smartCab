@@ -55,7 +55,7 @@ class QAlgorithm(Agent):
         if q is None:
             q = reward
         else:
-            q += self.alpha * (reward - self.gamma * future_rewards - q)
+            q += self.alpha * (reward + self.gamma * future_rewards - q)
            
             '''
             if future_rewards >=0:
@@ -92,7 +92,7 @@ class QLearningAgent(Agent):
         # TODO: Initialize any additional variables here
         self.total_reward = 0
         self.next_waypoint = None
-        self.QLearner = QAlgorithm(epsilon=0.05, alpha = 0.1, gamma = 0.9)
+        self.QLearner = QAlgorithm(epsilon=0.03, alpha = 0.1, gamma = 0.9)
         self.next_state = None
         
     def reset(self, destination=None):
