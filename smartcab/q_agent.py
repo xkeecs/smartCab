@@ -35,6 +35,9 @@ class QAlgorithm(Agent):
         self.gamma = gamma
         self.valid_actions = Environment.valid_actions
         
+    def set_eps(self, eps):
+        self.eps = eps
+
     def q_move(self, state):
         if random.random() < self.eps: 
             action = random.choice(self.valid_actions)
@@ -94,9 +97,14 @@ class QLearningAgent(Agent):
         self.next_waypoint = None
         self.QLearner = QAlgorithm(epsilon=0.03, alpha = 0.1, gamma = 0.9)
         self.next_state = None
-        
+        self.time_step = 1.0
+    
+    def get_decay_rate(self, t): #Decay rate for epsilon
+       return 1.0 / float(t)
+       
     def reset(self, destination=None):
         self.planner.route_to(destination)
+        self.time_step = 1.0
         # TODO: Prepare for a new trip; reset any variables here, if required
         '''
         self.previous_action = None
@@ -112,10 +120,12 @@ class QLearningAgent(Agent):
         inputs = self.env.sense(self)
         deadline = self.env.get_deadline(self)
         #env_states = self.env.agent_states[self]
-
+        self.time_step += 1
+        epsilon = self.get_decay_rate(self.time_step)
+        self.QLearner.set_eps(epsilon)
         
-#        self.state = (inputs['light'], inputs['oncoming'], inputs['left'], self.next_waypoint)
-        self.state = (inputs['light'], self.next_waypoint)
+        self.state = (inputs['light'], inputs['oncoming'], inputs['left'], self.next_waypoint)
+        #self.state = (inputs['light'], self.next_waypoint)
 
         action = self.QLearner.q_move(self.state)        
         
@@ -125,9 +135,9 @@ class QLearningAgent(Agent):
         
         new_inputs = self.env.sense(self)
         #env_states = self.env.agent_states[self]
-
-        #self.next_state =  (new_inputs['light'], new_inputs['oncoming'], new_inputs['left'], self.next_waypoint)
-        self.next_state =  (new_inputs['light'], self.next_waypoint)
+        new_deadline = self.env.get_deadline(self)
+        self.next_state =  (new_inputs['light'], new_inputs['oncoming'], new_inputs['left'], self.next_waypoint)
+        #self.next_state =  (new_inputs['light'], self.next_waypoint)
         
         # TODO: Learn policy based on state, action, reward
 
